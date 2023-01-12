@@ -14,9 +14,9 @@ using System.Runtime.InteropServices;
     int hei = org.bmp.Height;
     int wid = org.bmp.Width;
 
-    for (int j = 0; j < hei; j++)
+    for (int j = 1; j < hei; j++)
     {
-        for (int i = 0; i < wid; i++)
+        for (int i = 1; i < wid; i++)
         {
             int index = i + j * wid;
             if (orgImg[index] > 0f ||
@@ -37,7 +37,7 @@ using System.Runtime.InteropServices;
             {
                 if(flag)
                 {
-                    if(c1Index >= 0 && c1Index < wid || c2Index >= 0 && c2Index < wid)
+                    if((c1Index > 0 && c2Index < wid - 1) || (c3Index > 0 && c4Index < wid - 1) || ((c3Index/wid) < hei - 1 && (c4Index/wid) < hei - 1))
                     {
                         if(orgImg[c1Index] == 0f || orgImg[c2Index] == 0f)
                         {
@@ -50,11 +50,11 @@ using System.Runtime.InteropServices;
                             c4Index += wid;
                         }
                     }
-                        flag = false;
+                    flag = false;
                 }
                 else
                 {
-                    if(c1Index >= 0 && c1Index < wid || c3Index >= 0 && c3Index < wid)
+                    if((c1Index > 0 && c2Index < wid - 1) || (c3Index > 0 && c4Index < wid - 1)|| ((c3Index/wid) < hei - 1 && (c4Index/wid) < hei - 1))
                     {
                         if(orgImg[c1Index] == 0f || orgImg[c3Index] == 0f)
                         {
@@ -762,7 +762,7 @@ void showRects((Bitmap bmp, float[] img) t, List<Rectangle> list)
 
 var image = open("shuregui.png");
 
-image = resize(image, 1.1f, 1.1f);
+image = resize(image, 2f, 2f);
 image = bilinear(image);
 
 show(image);
