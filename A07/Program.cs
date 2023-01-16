@@ -7,38 +7,80 @@ using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
+(Bitmap bmp, float[] img) quantization((Bitmap bmp, float[] img) org, byte[] pallete)
+{
+    byte[] image = discret(org.img);
+    
+    for (int i = 0; i < image.Length; i += 3)
+    {
+        var minDistance = Int32.MaxValue;
+        int bestJ = 0;
+        for (int j = 0; j < pallete.Length; j += 3)
+        {
+            int dr = image[i] - pallete[j];
+            int dg = image[i+1] - pallete[j + 1];
+            int db = image[i+2] - pallete[j + 2];
+            int distance = ((dr*dr) + (dg * dg) + (db * db));
 
+           if(distance < minDistance)
+           {
+                minDistance = distance;
+                bestJ = j;
+           }
+        }
+        image[i] = pallete[bestJ];
+        image[i + 1] = pallete[bestJ + 1];
+        image[i + 2] = pallete[bestJ + 2];
+    }
 
-(Bitmap bmp, float[] img) paletinha((Bitmap bmp, float[] img) org)
+    img(org.bmp, image);
+    return (org.bmp, continuous(image));
+}
+
+ byte[] paletinha((Bitmap bmp, float[] img) org)
 {
     byte[] image = discret(org.img);
     int hei = org.bmp.Height;
     int wid = org.bmp.Width;
     float[] newImg = new float[wid*hei];
     byte[] pts = new byte[3 * 255];
-    
-    (byte R, byte G, byte B, int index)[] sla = new (byte R, byte G, byte B, int index)[255];
+    (byte R, byte G, byte B, int index)[] newColor = new (byte R, byte G, byte B, int index)[image.Length];
     int index = 0;
-    // for (int i = 0; i < 255; i+=3)
-    //     sla[i] = (pts[i], pts[i+1], pts[i+2], i);
+    int IndexPts = 0;
 
     Random.Shared.NextBytes(pts);
-     
-
-    
-        //primeiro: x = index % wid
-        //          y = index / wid
-
-    for (int i = 0; i < image.Length; i+=3)
+    for (int epoch = 0; epoch < 20; epoch++)
     {
-        for (int j = 0; j < pts.Length; j+=3)
+        index = 0;
+        for (int i = 0; i < image.Length; i += 3)
         {
-            int minR = 0, minG = 0, minB = 0;
-            
+            var minDistance = Int32.MaxValue;
+            for (int j = 0; j < pts.Length; j += 3)
+            {   
+                int dr = image[i] - pts[j];
+                int dg = image[i + 1] - pts[j + 1];
+                int db = image[i + 2] - pts[j + 2];
+                int distance = ((dr * dr) + (dg * dg) + (db * db));
+
+                if(distance < minDistance)
+                {
+                    minDistance = distance;
+                    IndexPts = j;
+                }
+            }
+            newColor[index] = (image[i], image[i + 1], image[i + 2], IndexPts);
+            index++;
         }
-       
+        for (int i = 0; i < pts.Length; i += 3)
+        {
+            if(newColor.Count(color => color.index == i) == 0)
+                continue;
+            pts[i + 0] = (byte)(newColor.Where(color => color.index == i).Average(color => color.R));
+            pts[i + 1] = (byte)(newColor.Where(color => color.index == i).Average(color => color.G));
+            pts[i + 2] = (byte)(newColor.Where(color => color.index == i).Average(color => color.B));
+        }
     }
-    return(org.bmp, newImg);
+    return pts;
 }
 
 (Bitmap bmp, float[] img) bilinear((Bitmap bmp, float[] img) org)
@@ -646,7 +688,7 @@ Image drawHist(int[] hist)
 
 void show((Bitmap bmp, float[] gray) t)
 {
-    var bytes = discretGray(t.gray);
+    var bytes = discret(t.gray);
     var image = img(t.bmp, bytes);
     showBmp(image);
 }
@@ -805,9 +847,12 @@ void showRects((Bitmap bmp, float[] img) t, List<Rectangle> list)
 
 var image = openRGB("shuregui.png");
 
-image = paletinha(image);
+var teto = paletinha(image);
+image = quantization(image, teto);
+show(image);
+
 // image = resize(image, 2f, 2f);
 
 // image = bilinear(image);
 
-show(image);
+// show(image);
